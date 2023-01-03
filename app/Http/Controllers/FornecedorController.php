@@ -2,35 +2,76 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Fornecedor;
 use Illuminate\Http\Request;
 
 class FornecedorController extends Controller
 {
-    public function index() {
-        $fornecedores = [
-            0 => [
-                'nome' => 'Fornecedor 1',
-                'status' => 'N',
-                'cnpj' => '0',
-                'ddd' => '', //São Paulo (SP)
-                'telefone' => '0000-0000'
-            ],
-            1 => [
-                'nome' => 'Fornecedor 2',
-                'status' => 'S',
-                'cnpj' => null,
-                'ddd' => '85', //Fortaleza (CE)
-                'telefone' => '0000-0000'
-            ],
-            2 => [
-                'nome' => 'Fornecedor 2',
-                'status' => 'S',
-                'cnpj' => null,
-                'ddd' => '32', //Juiz de fora (MG)
-                'telefone' => '0000-0000'
-            ]
-        ];
+    public function index()
+    {
+        return view('app.fornecedor.index');
+    }
 
-        return view('app.fornecedor.index', compact('fornecedores'));
+    public function listar(Request $request)
+    {
+        $fornecedores = Fornecedor::where('nome', 'like', '%'.$request->input('nome').'%')
+            ->where('site', 'like', '%'.$request->input('site').'%')
+            ->where('uf', 'like', '%'.$request->input('uf').'%')
+            ->where('email', 'like', '%'.$request->input('email').'%')
+            ->get();
+
+        return view('app.fornecedor.listar', ['fornecedores'=>$fornecedores]);
+    }
+
+    public function adicionar(Request $request)
+    {
+        $msg = '';
+
+        if (!empty($request->input('_token')) && empty($request->input('id'))) {
+            $regras = [
+                'nome'=> 'required|min:3|max:40',
+                'site'=> 'required',
+                'uf'=> 'required|min:2|max:2',
+                'email'=> 'email',
+            ];
+
+            $feedback = [
+                'required' => 'O campo :attribute deve ser preenchido',
+                'nome.min' => 'O campo nome deve ter no mínimo 3 caracteres',
+                'nome.max' => 'O campo nome deve ter no máximo 40 caracteres',
+                'uf.max' => 'O campo uf deve ter no máximo 2 caracteres',
+                'uf.min' => 'O campo uf deve ter no mínimo 2 caracteres',
+                'email.email' => 'O campo e-mail não foi preenchido corretamente'
+            ];
+
+            $request->validate($regras, $feedback);
+
+            $msg = "Cadastro com sucesso!";
+
+            $fornecedor = new Fornecedor();
+            $fornecedor->create($request->all());
+        }
+
+        if (!empty($request->input('_token')) && !empty($request->input('id'))) {
+            $fornecedor = Fornecedor::find($request->input('id'));
+            $updated = $fornecedor->update($request->all());
+
+            if ($updated) {
+                $msg = "Atualizado com sucesso!";
+            } else {
+                $msg = "Erro ao tentar atualizar registro!";
+            }
+
+            return redirect()->route('app.fornecedor.editar', ['id'=>$request->input('id'), 'msg' => $msg]);
+        }
+
+        return view('app.fornecedor.adicionar', ['msg'=> $msg, 'fornecedor'=>null]);
+    }
+
+    public function editar($id, $msg = null)
+    {
+        $fornecedor = Fornecedor::find($id);
+
+        return view('app.fornecedor.adicionar', ['fornecedor'=>$fornecedor,'msg'=>$msg]);
     }
 }
