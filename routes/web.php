@@ -10,6 +10,7 @@ use App\Http\Controllers\ProdutoController;
 use App\Http\Controllers\SobreNosController;
 use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\FornecedorController;
+use App\Http\Controllers\ProdutoDetalheController;
 
 Route::get('/', [PrincipalController::class,'principal'])->name('site.index');
 Route::get('/sobre-nos', [SobreNosController::class,'sobreNos'])->name('site.sobrenos');
@@ -35,6 +36,8 @@ Route::middleware('autenticacao:ldap,visitante')->prefix('/app')->group(function
 
     // Route::get('/produto', [ProdutoController::class,'index'])->name('app.produto');
     Route::resource('produto', ProdutoController::class);
+
+    Route::resource('produto-detalhe', ProdutoDetalheController::class);
 });
 
 
